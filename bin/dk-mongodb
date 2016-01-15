@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -eu
+
+prgname=${0##*/}
+
+[ $# -eq 0 ] && {
+    echo "usage: $prgname name [port] [image]"
+    exit 2
+}
+
+name="mongodb-$1"
+shift
+
+port=${1:-27018}
+image=${2:-mongodb}
+
+docker start -i -a "$name" || \
+    docker run -i -t -p 127.0.0.1:"$port":27017 --name="$name" "$image"

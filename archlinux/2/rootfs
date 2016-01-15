@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+set -eu
+
+ROOTFS=/rootfs
+DEV=$ROOTFS/dev
+
+pacman --cachedir "$PWD/pkg" -S --noconfirm --needed expect haveged
+
+pacman=(pacman --root $ROOTFS --config pacman.conf --cachedir "$PWD/pkg")
+pacman_key=(pacman-key --config pacman.conf --gpgdir $ROOTFS/etc/pacman.d/gnupg)
+
+mkdir -m 0755 -p $ROOTFS/var/lib/pacman
+"${pacman[@]}" -Sy --noconfirm --needed filesystem
+
+mknod -m 0666 $DEV/null c 1 3
+mknod -m 0666 $DEV/zero c 1 5
+mknod -m 0666 $DEV/random c 1 8
+mknod -m 0666 $DEV/urandom c 1 9
+mkdir -m 0755 $DEV/pts
+mkdir -m 1777 $DEV/shm
+mknod -m 0666 $DEV/tty c 5 0
+mknod -m 0600 $DEV/console c 5 1
+mknod -m 0666 $DEV/tty0 c 4 0
+mknod -m 0666 $DEV/full c 1 7
+mknod -m 0600 $DEV/initctl p
+mknod -m 0666 $DEV/ptmx c 5 2
+ln -sf /proc/self/fd $DEV/fd
+touch $ROOTFS/proc/cmdline
+
+PKGIGNORE=(
+    cryptsetup
+    device-mapper
+    dhcpcd
+    groff
+    iproute2
+    jfsutils
+    linux
+    lvm2
+    man-db
+    man-pages
+    mdadm
+    nano
+    netctl
+    openresolv
+    pciutils
+    pcmciautils
+    reiserfsprogs
+    s-nail
+    systemd-sysvcompat
+    usbutils
+    vi
+    xfsprogs
+)
+PKGIGNORE=$(IFS=','; echo "${PKGIGNORE[*]}")
+
+expect <<EOF
+	set send_slow {1 .1}
+	proc send {ignore arg} {
+		sleep .1
+		exp_send -s -- \$arg
+	}
+	set timeout 600
+
+	spawn ${pacman[@]} -Sy base --needed --ignore $PKGIGNORE
+	expect {
+		-exact "anyway? \[Y/n\] " { send -- "n\r"; exp_continue }
+		-exact "(default=all): " { send -- "\r"; exp_continue }
+		-exact "installation? \[Y/n\]" { send -- "y\r"; exp_continue }
+	}
+EOF
+
+haveged -w 1024
+"${pacman_key[@]}" --init
+"${pacman_key[@]}" --populate archlinux
+pkill haveged
+
+ln -s /usr/share/zoneinfo/UTC $ROOTFS/etc/localtime
+echo 'en_US.UTF-8 UTF-8' >$ROOTFS/etc/locale.gen
+echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' >$ROOTFS/etc/pacman.d/mirrorlist
+
+rm -f $ROOTFS/proc/cmdline
+rm -rf $ROOTFS/usr/share/man/*
+tar --numeric-owner --xattrs --acls -C $ROOTFS -c -f rootfs.tar .
