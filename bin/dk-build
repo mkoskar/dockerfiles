@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -eu
+
+# target repository
+target=${1:-${PWD##*/}}
+
+docker build -t "$target" .
