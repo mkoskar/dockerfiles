@@ -32,7 +32,6 @@ PKGIGNORE=(
     cryptsetup
     device-mapper
     dhcpcd
-    groff
     iproute2
     jfsutils
     linux

@@ -1,6 +1,6 @@
 FROM archlinux
 
-RUN pacman -Syyu --noconfirm && \
+RUN pacman -Syu --noconfirm && \
     pacman -S --noconfirm mongodb mongodb-tools && \
     rm -rf /var/cache/pacman/pkg/*
 

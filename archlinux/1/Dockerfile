@@ -1,5 +1,5 @@
 FROM scratch
-MAINTAINER Miroslav Koskar <http://mkoskar.com/>
+MAINTAINER Miroslav Koškár <https://mkoskar.com/>
 
 ADD rootfs.tar /
 

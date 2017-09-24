@@ -2,5 +2,5 @@ dockerfiles
 ===========
 
 :Description: My Dockerfiles
-:Licence: GPL
+:License: Apache 2.0
 :Registry: https://hub.docker.com/u/mkoskar/

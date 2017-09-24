@@ -10,8 +10,11 @@ target=${1:-archlinux}
 curl -sL -o mkimage-arch https://raw.githubusercontent.com/docker/docker/master/contrib/mkimage-arch.sh
 curl -sLO https://raw.githubusercontent.com/docker/docker/master/contrib/mkimage-arch-pacman.conf
 
-sed -i 's/^tar .*$/tar --numeric-owner --xattrs --acls -C $ROOTFS -c -f rootfs.tar ./;
-/^docker run/d' mkimage-arch
+# shellcheck disable=SC2016
+sed -i \
+    -e 's/^tar .*$/tar --numeric-owner --xattrs --acls -C $ROOTFS -c -f rootfs.tar ./' \
+    -e '/^docker run/d' \
+    mkimage-arch \
 
 chmod 755 mkimage-arch
 sudo ./mkimage-arch
